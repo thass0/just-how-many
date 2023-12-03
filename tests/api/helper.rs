@@ -91,14 +91,25 @@ impl TestApp {
             .expect("Failed to execute request")
     }
 
+    pub async fn post_register(&self, body: &str) -> reqwest::Response {
+	self.api_client
+	    .post(&format!("{}/register", &self.address))
+	    .header("Content-Type", "application/x-www-form-urlencoded")
+	    .body(body.to_string())
+	    .send()
+	    .await
+	    .expect("Failed to execute request")
+    }
+
     pub async fn insert_page(&self) -> uuid::Uuid {
 	let page_id = Uuid::new_v4();
 	sqlx::query!(
 	    r#"
-INSERT INTO pages (page_id, owner)
-VALUES ($1, $2)"#,
+INSERT INTO pages (page_id, owner, url)
+VALUES ($1, $2, $3)"#,
 	    page_id,
-	    Uuid::new_v4()
+	    Uuid::new_v4(),
+	    "https://example.com"
 	)
 	    .execute(&self.db)
 	    .await

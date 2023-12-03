@@ -59,6 +59,7 @@ pub async fn run(
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(routes::health_check))
             .route("/hit/{site_id}", web::get().to(routes::hit))
+            .route("/register", web::post().to(routes::register))
             .app_data(db.clone())
     })
     .listen(listener)?
