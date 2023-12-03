@@ -1,5 +1,6 @@
-FROM lukemathwalker/cargo-chef:latest as chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.72.0 as chef
 WORKDIR /app
+RUN apt update && apt install lld clang -y
 
 FROM chef as planner
 COPY . .
@@ -14,7 +15,7 @@ ENV SQLX_OFFLINE true
 RUN cargo build --release --bin jhm
 
 # Runtime stage
-FROM debian:bullseye-slim AS runtime
+FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 
 RUN apt-get update -y \
@@ -27,4 +28,5 @@ COPY --from=builder /app/target/release/jhm jhm
 COPY configuration configuration
 
 ENV APP_ENVIRONMENT production
+
 ENTRYPOINT ["./jhm"]

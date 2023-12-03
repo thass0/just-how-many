@@ -8,6 +8,7 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
+# TODO: Add cli and update the dockerfile with the server binary
 name = "jhm"
 
 [dependencies]
@@ -32,21 +33,21 @@ tracing-actix-web = "0.6"
 version = "0.7"
 default-features = false
 features = [
-	 "runtime-tokio-rustls",
-	"macros",
-	"postgres",
-	"uuid",
-	"chrono",
-	"migrate",
+"runtime-tokio-rustls",
+"macros",
+"postgres",
+"uuid",
+"chrono",
+"migrate",
 ]
 
 [dependencies.redis]
 version = "0.23"
 features = [
-	 "r2d2",
-	 "connection-manager",
-	 "tokio-rustls-comp",
-	 "tokio-native-tls-comp"
+"r2d2",
+"connection-manager",
+"tokio-rustls-comp",
+"tokio-native-tls-comp"
 ]
 
 # Could reqwest be moved to dev dependencies?
