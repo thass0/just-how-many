@@ -92,6 +92,15 @@ impl TestApp {
             .expect("Failed to execute request")
     }
 
+    pub async fn get_hits(&self, url: &str) -> reqwest::Response {
+	self.api_client
+	    .get(&format!("{}/hits", &self.address))
+	    .query(&[("url", url)])
+	    .send()
+	    .await
+	    .expect("Failed to execute request")
+    }
+
     pub async fn post_register(&self, body: &str) -> reqwest::Response {
 	self.api_client
 	    .post(&format!("{}/register", &self.address))

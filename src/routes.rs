@@ -4,3 +4,5 @@ mod hit;
 pub use hit::*;
 mod register;
 pub use register::*;
+mod hits;
+pub use hits::*;

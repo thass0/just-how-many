@@ -12,7 +12,7 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 ENV SQLX_OFFLINE true
-RUN cargo build --release --bin jhm
+RUN cargo build --release --bin jhm-server
 
 # Runtime stage
 FROM debian:bookworm-slim AS runtime
@@ -24,9 +24,9 @@ RUN apt-get update -y \
 	&& apt-get clean -y \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/target/release/jhm jhm
+COPY --from=builder /app/target/release/jhm-server jhm-server
 COPY configuration configuration
 
 ENV APP_ENVIRONMENT production
 
-ENTRYPOINT ["./jhm"]
+ENTRYPOINT ["./jhm-server"]

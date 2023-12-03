@@ -34,17 +34,33 @@ async fn insert_page(
     url: Url,
     db_pool: &PgPool,
 ) -> anyhow::Result<Uuid> {
-    let page_id = Uuid::new_v4();
-    sqlx::query!(
+    let rec = sqlx::query!(
 	r#"
-INSERT INTO pages (page_id, owner, url)
-VALUES ($1, $2, $3)"#,
-	page_id,
-	Uuid::new_v4(),
+SELECT page_id
+FROM pages
+WHERE url = $1"#,
 	url.as_str(),
     )
-	.execute(db_pool)
+	.fetch_optional(db_pool)
 	.await
-	.context("Failed to insert new page")?;
-    Ok(page_id)
+	.context("Failed to check if page exists")?;
+    match rec {
+	Some (rec) => Ok(rec.page_id),
+	None => {
+	    // Create a new page.
+	    let page_id = Uuid::new_v4();
+	    sqlx::query!(
+		r#"
+INSERT INTO pages (page_id, owner, url)
+VALUES ($1, $2, $3)"#,
+		page_id,
+		Uuid::new_v4(),
+		url.as_str(),
+	    )
+		.execute(db_pool)
+		.await
+		.context("Failed to insert new page")?;
+	    Ok(page_id)	    
+	}
+    }    
 }

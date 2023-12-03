@@ -78,6 +78,7 @@ pub async fn run(
             .route("/health_check", web::get().to(routes::health_check))
             .route("/hit/{site_id}", web::get().to(routes::hit))
             .route("/register", web::post().to(routes::register))
+            .route("/hits", web::get().to(routes::hits))
             .app_data(pg.clone())
             .app_data(redis.clone())
             .app_data(visit_duration.clone())
