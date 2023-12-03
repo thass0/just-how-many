@@ -19,7 +19,7 @@ fi
 
 DB_USER="${POSTGRES_USER:=postgres}"  # Custom user of default to 'postgres'
 DB_PASSWORD="${POSTGRES_PASSWORD:=password}"  # Custom password or default to 'password'
-DB_NAME="${POSTGRES_DB:=newsletter}"  # Custom name of default to 'newsletter'
+DB_NAME="${POSTGRES_DB:=jhm}"  # Custom name or default to 'sites'
 DB_PORT="${POSTGRES_PORT:=5432}"  # Custom port or default to '5432'
 
 # Skip docker if dockerized Postgres DB is already running
@@ -46,9 +46,9 @@ done
 # To migrate without tearing down and re-creating an existing Postgres instance run:
 # `SKIP_DOCKER=true ./scripts/init_db.sh` 
 
-# DATABASE_URL doesn't need to be exported because it's found in .env
-# DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
-# export DATABASE_URL
+# ~~DATABASE_URL doesn't need to be exported because it's found in .env~~
+DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
+export DATABASE_URL
 sqlx database create
 sqlx migrate run
 

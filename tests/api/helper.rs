@@ -90,4 +90,19 @@ impl TestApp {
             .await
             .expect("Failed to execute request")
     }
+
+    pub async fn insert_page(&self) -> uuid::Uuid {
+	let page_id = Uuid::new_v4();
+	sqlx::query!(
+	    r#"
+INSERT INTO pages (page_id, owner)
+VALUES ($1, $2)"#,
+	    page_id,
+	    Uuid::new_v4()
+	)
+	    .execute(&self.db)
+	    .await
+	    .expect("Failed to create some owner");
+	page_id
+    }
 }

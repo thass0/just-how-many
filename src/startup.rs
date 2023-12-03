@@ -14,7 +14,7 @@ pub struct Application {
 
 impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
-        let db = get_connection_pool(&configuration.database).await;
+        let postgres = get_connection_pool(&configuration.database).await;
         let address = format!(
             "{}:{}",
             configuration.application.host,
@@ -24,7 +24,7 @@ impl Application {
         let port = listener.local_addr().unwrap().port();
         let server = run(
             listener,
-            db,
+            postgres,
         ).await?;
 
         Ok(Self{ port, server })
@@ -58,6 +58,7 @@ pub async fn run(
         App::new()
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(routes::health_check))
+            .route("/hit/{site_id}", web::get().to(routes::hit))
             .app_data(db.clone())
     })
     .listen(listener)?
