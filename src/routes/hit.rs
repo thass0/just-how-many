@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, web};
+use actix_web::{HttpRequest, HttpResponse, web};
 use sqlx::PgPool;
 use anyhow::Context;
 use uuid::Uuid;
@@ -9,10 +9,14 @@ use crate::utils::e500;
     skip(db_pool)
 )]
 pub async fn hit(
+    req: HttpRequest,
     path: web::Path<Uuid>,
     db_pool: web::Data<PgPool>,
 ) -> actix_web::Result<HttpResponse> {
     let page_id: uuid::Uuid = path.into_inner();
+
+    let _addr = req.peer_addr()
+	.ok_or_else(|| e500("Missing IP address"))?;
 
     increment_hit(page_id, &db_pool)
         .await
