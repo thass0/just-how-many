@@ -31,7 +31,7 @@ tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
 tracing-actix-web = "0.6"
-clap = { version = "4.4.10", features = ["derive"] }
+clap = { version = "4.4.10", features = ["derive", "env"] }
 
 [dependencies.sqlx]
 version = "0.7"

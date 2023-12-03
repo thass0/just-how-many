@@ -2,10 +2,14 @@ use clap::{Parser, Subcommand};
 use url::Url;
 use anyhow::Context;
 use uuid::Uuid;
+use std::env;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    #[arg(env="JHM_SERVICE")]
+    /// Address of the JHM service that does the tracking.
+    service: Url,
     #[command(subcommand)]
     command: Commands,
 }
@@ -26,11 +30,15 @@ enum Commands {
 
 use Commands::*;
 
-const ADDRESS: &str = "http://localhost:8080"; // TODO: Get from envvar.
-
-fn get_hits(client: &reqwest::blocking::Client, url: &Url) -> anyhow::Result<i32> {
+fn get_hits(
+    client: &reqwest::blocking::Client,
+    service: &Url,
+    url: &Url,
+) -> anyhow::Result<i32> {
+    let mut service = service.clone();
+    service.set_path("hits");
     let response = client.
-	get(format!("{ADDRESS}/hits"))
+	get(service)
 	.query(&[("url", url.as_str())])
 	.send()
 	.context("reqwest GET failed")?;
@@ -47,10 +55,18 @@ fn get_hits(client: &reqwest::blocking::Client, url: &Url) -> anyhow::Result<i32
     }
 }
 
-fn post_register(client: &reqwest::blocking::Client, url: &Url) -> anyhow::Result<Uuid> {
+fn post_register(
+    client: &reqwest::blocking::Client,
+    service: &Url,
+    url: &Url,
+) -> anyhow::Result<Uuid> {
+    let mut service = service.clone();
+    service.set_path("register");
+
     let body = format!("url={url}");
+
     let response = client
-        .post(&format!("{ADDRESS}/register"))
+        .post(service)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -77,13 +93,13 @@ fn main() {
     
     match cli.command {
 	Hits { url } => {
-	    let hits = get_hits(&client, &url)
+	    let hits = get_hits(&client, &cli.service, &url)
 		.expect(&format!("Failed to get page hits of {url}"));
 	    let s = if hits == 1 { "" } else { "s" };
 	    println!("🌟 {url} has {hits} hit{s}!");
 	},
 	Generate { url } => {
-	    let page_id = post_register(&client, &url)
+	    let page_id = post_register(&client, &cli.service, &url)
 		.expect(&format!("Failed to register {url}"));
 	    println!(r#"🗃️ SUCCESS! {url} is registered under the page ID {page_id}.
 This ID is used to track your page.
@@ -91,9 +107,9 @@ This ID is used to track your page.
 Just put the following CSS the in style sheets of the page to track, and you're done!
 
   body:hover {{
-      border-image: url("{ADDRESS}/hit/{page_id}");
+      border-image: url("{}/hit/{page_id}");
       border-width: 0;
-  }}"#);
+  }}"#, &cli.service);
 	},
     }
 }
