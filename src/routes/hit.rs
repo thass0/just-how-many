@@ -30,7 +30,7 @@ pub async fn hit(
     if visit == VisitStatus::New {
 	increment_hit(page_id, &pg_pool)
 	    .await
-	    .map_err(e500)?;	    
+	    .map_err(e500)?;
     }
 
     
@@ -46,11 +46,17 @@ pub async fn increment_hit(
     pg_pool: &PgPool,
 ) -> anyhow::Result<()>
 {
+    // i64 because of sqlx' type constraints.
+    let now: i64 = unix_time_secs()
+	.try_into()
+	.expect("It's not 2100");
     sqlx::query!(
 	r#"
 UPDATE pages
-SET hits = hits + 1
-WHERE page_id = $1"#,
+SET hits = hits + 1,
+    timestamps = ARRAY_APPEND(timestamps, $1)
+WHERE page_id = $2"#,
+	now,
 	page_id
     )
 	.execute(pg_pool)

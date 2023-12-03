@@ -2,7 +2,8 @@ use clap::{Parser, Subcommand};
 use url::Url;
 use anyhow::Context;
 use uuid::Uuid;
-use std::env;
+
+use jhm::routes::Hits as JhmHits;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -34,7 +35,7 @@ fn get_hits(
     client: &reqwest::blocking::Client,
     service: &Url,
     url: &Url,
-) -> anyhow::Result<i32> {
+) -> anyhow::Result<JhmHits> {
     let mut service = service.clone();
     service.set_path("hits");
     let response = client.
@@ -45,7 +46,7 @@ fn get_hits(
 
     if response.status().is_success() {
 	response
-	    .json::<i32>()
+	    .json::<JhmHits>()
 	    .context("Failed to decode page hit count")
     } else {
 	let err = response
@@ -95,8 +96,8 @@ fn main() {
 	Hits { url } => {
 	    let hits = get_hits(&client, &cli.service, &url)
 		.expect(&format!("Failed to get page hits of {url}"));
-	    let s = if hits == 1 { "" } else { "s" };
-	    println!("🌟 {url} has {hits} hit{s}!");
+	    let s = if hits.n == 1 { "" } else { "s" };
+	    println!("🌟 {url} has {} hit{s}!", hits.n);
 	},
 	Generate { url } => {
 	    let page_id = post_register(&client, &cli.service, &url)
