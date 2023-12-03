@@ -1,6 +1,6 @@
-use api::startup::Application;
-use api::configuration::get_configuration;
-use api::telemetry::*;
+use jhm::startup::Application;
+use jhm::configuration::get_configuration;
+use jhm::telemetry::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

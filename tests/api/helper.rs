@@ -2,9 +2,9 @@ use uuid::Uuid;
 use once_cell::sync::Lazy;
 use sqlx::{PgPool, PgConnection, Connection, Executor};
 
-use api::startup::{Application, get_pg_connection_pool};
-use api::configuration::{PostgresSettings, get_configuration};
-use api::telemetry::*;
+use jhm::startup::{Application, get_pg_connection_pool};
+use jhm::configuration::{PostgresSettings, get_configuration};
+use jhm::telemetry::*;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let default_name = "test".to_owned();
