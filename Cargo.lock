@@ -291,6 +291,7 @@ dependencies = [
  "tracing-bunyan-formatter",
  "tracing-log 0.1.4",
  "tracing-subscriber",
+ "url",
  "uuid",
  "wiremock",
 ]

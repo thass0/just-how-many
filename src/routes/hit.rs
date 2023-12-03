@@ -1,23 +1,24 @@
-use actix_web::{Responder, web};
+use actix_web::{HttpResponse, web};
 use sqlx::PgPool;
 use anyhow::Context;
+use uuid::Uuid;
+use crate::utils::e500;
 
 #[tracing::instrument(
     name = "Register page hit",
     skip(db_pool)
 )]
 pub async fn hit(
-    path: web::Path<String>,
+    path: web::Path<Uuid>,
     db_pool: web::Data<PgPool>,
-) -> impl Responder {
-    let page_id: uuid::Uuid = path.into_inner().parse().unwrap();
-    tracing::info!("Got {}", page_id);
+) -> actix_web::Result<HttpResponse> {
+    let page_id: uuid::Uuid = path.into_inner();
 
     increment_hit(page_id, &db_pool)
         .await
-        .expect("Database should not fail");
+        .map_err(e500)?;
     
-    format!("Welcome {page_id}")
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[tracing::instrument(
