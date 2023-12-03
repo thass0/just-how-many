@@ -5,7 +5,8 @@ use tracing_actix_web::TracingLogger;
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use crate::routes;
-use crate::configuration::{Settings, DatabaseSettings};
+use crate::configuration::{Settings, PostgresSettings, RedisSettings};
+use crate::utils::RedisPool;
 
 pub struct Application {
     port: u16,
@@ -14,7 +15,8 @@ pub struct Application {
 
 impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
-        let postgres = get_connection_pool(&configuration.database).await;
+        let postgres = get_pg_connection_pool(&configuration.postgres).await;
+	let redis = get_redis_connection_pool(&configuration.redis);
         let address = format!(
             "{}:{}",
             configuration.application.host,
@@ -25,6 +27,8 @@ impl Application {
         let server = run(
             listener,
             postgres,
+	    redis,
+	    configuration.application.visit_duration,
         ).await?;
 
         Ok(Self{ port, server })
@@ -40,27 +44,43 @@ impl Application {
 }
 
 
-pub async fn get_connection_pool(
-    configuration: &DatabaseSettings,
+pub async fn get_pg_connection_pool(
+    configuration: &PostgresSettings,
 ) -> PgPool {
     PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
         .connect_lazy_with(configuration.with_db())
 }
 
+pub fn get_redis_connection_pool(
+    configuration: &RedisSettings,
+) -> r2d2::Pool<redis::Client> {
+    let client = redis::Client::open(configuration.with_db()).unwrap();
+    r2d2::Pool::builder()
+        .connection_timeout(std::time::Duration::from_secs(2))
+        .build(client)
+	.unwrap()
+}
+
 
 pub async fn run(
     listener: TcpListener,
-    db: PgPool,
+    pg: PgPool,
+    redis: RedisPool,
+    visit_duration: u64,
 ) -> Result<Server, anyhow::Error> {
-    let db = web::Data::new(db);
+    let pg = web::Data::new(pg);
+    let redis = web::Data::new(redis);
+    let visit_duration = web::Data::new(visit_duration);
     let server = HttpServer::new(move || {
         App::new()
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(routes::health_check))
             .route("/hit/{site_id}", web::get().to(routes::hit))
             .route("/register", web::post().to(routes::register))
-            .app_data(db.clone())
+            .app_data(pg.clone())
+            .app_data(redis.clone())
+            .app_data(visit_duration.clone())
     })
     .listen(listener)?
     .run();

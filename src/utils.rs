@@ -1,3 +1,6 @@
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
 pub fn error_chain_fmt(
     e: &impl std::error::Error,
     f: &mut std::fmt::Formatter,
@@ -16,4 +19,12 @@ where
     T: std::fmt::Debug + std::fmt::Display + 'static
 {
     actix_web::error::ErrorInternalServerError(e)
+}
+
+pub type RedisPool = r2d2::Pool<redis::Client>;
+
+pub fn hash_data<T: Hash>(t: &T) -> u64  {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
 }

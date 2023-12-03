@@ -5,12 +5,13 @@ use sqlx::ConnectOptions;
 
 #[derive(Clone, serde::Deserialize)]
 pub struct Settings {
-    pub database: DatabaseSettings,
+    pub postgres: PostgresSettings,
+    pub redis: RedisSettings,
     pub application: ApplicationSettings,
 }
 
 #[derive(Clone, serde::Deserialize)]
-pub struct DatabaseSettings {
+pub struct PostgresSettings {
     pub username: String,
     pub password: Secret<String>,
     #[serde(deserialize_with = "deserialize_number_from_string")]
@@ -20,7 +21,7 @@ pub struct DatabaseSettings {
     pub require_ssl: bool,
 }
 
-impl DatabaseSettings {
+impl PostgresSettings {
     pub fn without_db(&self) -> PgConnectOptions {
         let ssl_mode =  if self.require_ssl {
             PgSslMode::Require
@@ -44,10 +45,36 @@ impl DatabaseSettings {
 }
 
 #[derive(Clone, serde::Deserialize)]
+pub struct RedisSettings {
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
+    pub host: String,
+    pub username: Option<String>,
+    pub password: Option<Secret<String>>,
+}
+
+impl RedisSettings {
+    pub fn with_db(&self) -> redis::ConnectionInfo {
+	redis::ConnectionInfo {
+	    addr: redis::ConnectionAddr::Tcp(self.host.clone(), self.port),
+	    redis: redis::RedisConnectionInfo {
+		db: 0,
+		username: self.username.clone(),
+		password: self.password.clone()
+		    .map(|p| p.expose_secret().to_owned()),
+	    }
+	}
+    }
+}
+
+#[derive(Clone, serde::Deserialize)]
 pub struct ApplicationSettings {
     pub host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
+    /// Number of seconds until a visit by the same
+    /// IP address counts as a new visit again.
+    pub visit_duration: u64,
 }
 
 pub enum Environment {

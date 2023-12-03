@@ -20,6 +20,7 @@ secrecy = { version = "0.8", features = ["serde"] }
 anyhow = "1"
 uuid = { version = "1", features = ["v4", "serde"] }
 url = { version = "2.5", features = ["serde"] }
+r2d2 = "0.8"
 
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
@@ -31,15 +32,25 @@ tracing-actix-web = "0.6"
 version = "0.6"
 default-features = false
 features = [
-  "runtime-tokio-rustls",
-  "macros",
-  "postgres",
-  "uuid",
-  "chrono",
-  "migrate",
-  "offline"
+"runtime-tokio-rustls",
+"macros",
+"postgres",
+"uuid",
+"chrono",
+"migrate",
+"offline"
 ]
 
+[dependencies.redis]
+version = "0.23"
+features = [
+"r2d2",
+"connection-manager",
+"tokio-rustls-comp",
+"tokio-native-tls-comp"
+]
+
+# Could reqwest be moved to dev dependencies?
 [dependencies.reqwest]
 version = "0.11"
 default-features = false

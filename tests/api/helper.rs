@@ -2,8 +2,8 @@ use uuid::Uuid;
 use once_cell::sync::Lazy;
 use sqlx::{PgPool, PgConnection, Connection, Executor};
 
-use api::startup::{Application, get_connection_pool};
-use api::configuration::{DatabaseSettings, get_configuration};
+use api::startup::{Application, get_pg_connection_pool};
+use api::configuration::{PostgresSettings, get_configuration};
 use api::telemetry::*;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
@@ -39,12 +39,13 @@ impl TestApp {
 
         let configuration = {
             let mut c = get_configuration().expect("Failed to read configuratoin");
-            c.database.database_name = Uuid::new_v4().to_string();
+            c.postgres.database_name = Uuid::new_v4().to_string();
             c.application.port = 0;
+	    c.application.visit_duration = 1;
             c
         };
 
-        Self::configure_database(&configuration.database).await;
+        Self::configure_postgres(&configuration.postgres).await;
 
         let application = Application::build(configuration.clone())
             .await
@@ -60,12 +61,12 @@ impl TestApp {
         Self {
             address: format!("http://127.0.0.1:{}", application_port),
             port: application_port,
-            db: get_connection_pool(&configuration.database).await,
+            db: get_pg_connection_pool(&configuration.postgres).await,
             api_client: client,
         }
     }
 
-    async fn configure_database(db_config: &DatabaseSettings) -> PgPool {
+    async fn configure_postgres(db_config: &PostgresSettings) -> PgPool {
         let mut connection = PgConnection::connect_with(&db_config.without_db())
             .await
             .expect("Failed to connect to postgres");
